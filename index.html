@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AiGRI System Sequence Diagrams</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 40px;
+            font-size: 1.2rem;
+        }
+        
+        .phase-container {
+            margin-bottom: 60px;
+        }
+        
+        .phase-title {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(52, 152, 219, 0.3);
+        }
+        
+        .phase-title h2 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+        
+        .phase-title p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+        
+        .diagram-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e6ed;
+        }
+        
+        .mermaid {
+            text-align: center;
+        }
+        
+        /* Custom styling for mermaid diagrams */
+        .mermaid .actor {
+            fill: #3498db !important;
+        }
+        
+        .legend {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .legend h3 {
+            color: #2c3e50;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .legend ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .legend li {
+            margin-bottom: 8px;
+            color: #5a6c7d;
+        }
+        
+        .key-insights {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 40px;
+        }
+        
+        .key-insights h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+        }
+        
+        .key-insights ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .key-insights li {
+            margin-bottom: 10px;
+            opacity: 0.95;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AiGRI System Architecture</h1>
+        <p class="subtitle">Complete Logic Flow for Agricultural Disaster Assessment</p>
+        
+        <!-- Phase 1: Pre-Disaster -->
+        <div class="phase-container">
+            <div class="phase-title">
+                <h2>Phase 1: Pre-Disaster Setup</h2>
+                <p>Registration & Baseline Creation</p>
+            </div>
+            
+            <div class="diagram-container">
+                <div class="mermaid">
+sequenceDiagram
+    participant Farmer
+    participant LGU_Operator as LGU Operator
+    participant Frontend
+    participant Backend as Backend (API)
+    participant DB as Database
+    participant AI_Pipeline as AI Pipeline (Async)
+    participant File_Storage as File Storage
+
+    %% Step 1: Farmer Registration & Plot Definition
+    Farmer->>Frontend: 1. Registers account & draws farm boundary on map
+    Frontend->>Backend: 2. POST /api/plots (farmer_info, boundary_geojson)
+    Backend->>DB: 3. Create Farmer record & FarmPlot record
+    DB-->>Backend: 4. Return new plot_id
+    Backend-->>Frontend: 5. Confirm plot registration
+    Frontend-->>Farmer: 6. Show "Plot Registered" confirmation
+
+    %% Step 2: LGU Operator Initiates Baseline Mission
+    LGU_Operator->>Frontend: 7. Views list of registered plots & initiates baseline mission
+    Note right of LGU_Operator: Flies drone over the farm (offline action)
+    LGU_Operator->>Frontend: 8. Uploads raw "baseline" drone images for the plot
+    
+    %% Step 3: Backend Processes Baseline Images
+    Frontend->>Backend: 9. POST /api/missions/baseline (plot_id, images)
+    Backend->>File_Storage: 10. Save raw baseline images to a unique mission folder
+    Backend->>DB: 11. Create DroneMission record (status: 'processing_baseline')
+    
+    %% Step 4: Asynchronous AI Processing
+    Backend->>AI_Pipeline: 12. Trigger background job: create_baseline(mission_id)
+    Backend-->>Frontend: 13. Immediately respond with { "status": "Processing Started" }
+    
+    AI_Pipeline->>File_Storage: 14. Stitch images into baseline_map.tif
+    AI_Pipeline->>File_Storage: 15. Save the generated orthomosaic map
+    AI_Pipeline->>DB: 16. Update DroneMission record (status: 'baseline_complete', map_path)
+                </div>
+            </div>
+            
+            <div class="legend">
+                <h3>Phase 1 Key Steps:</h3>
+                <ul>
+                    <li><strong>Farmer Onboarding (1-6):</strong> Account creation and farm boundary definition using GeoJSON</li>
+                    <li><strong>LGU Action (7-8):</strong> Drone flight and baseline image capture</li>
+                    <li><strong>Backend Ingestion (9-11):</strong> Secure file storage and mission record creation</li>
+                    <li><strong>AI Processing (12-16):</strong> Asynchronous image stitching and orthomosaic generation</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Phase 2: Post-Disaster -->
+        <div class="phase-container">
+            <div class="phase-title">
+                <h2>Phase 2: Post-Disaster Analysis</h2>
+                <p>Damage Assessment & Report Generation</p>
+            </div>
+            
+            <div class="diagram-container">
+                <div class="mermaid">
+sequenceDiagram
+    participant LGU_Operator as LGU Operator
+    participant Farmer
+    participant Frontend
+    participant Backend as Backend (API)
+    participant DB as Database
+    participant AI_Pipeline as AI Pipeline (Async)
+    participant File_Storage as File Storage
+
+    %% Step 1: LGU Operator Initiates Post-Disaster Mission
+    Note over LGU_Operator: A typhoon/disaster occurs (external trigger)
+    LGU_Operator->>Frontend: 1. Finds the existing mission (with completed baseline)
+    Note right of LGU_Operator: Flies the exact same drone mission again (offline action)
+    LGU_Operator->>Frontend: 2. Uploads raw "post-disaster" drone images
+
+    %% Step 2: Backend Triggers the Full Analysis
+    Frontend->>Backend: 3. POST /api/missions/analyze (mission_id, images)
+    Backend->>File_Storage: 4. Save raw post-disaster images
+    Backend->>DB: 5. Update DroneMission record (status: 'processing_analysis')
+
+    %% Step 3: Asynchronous AI Processing
+    Backend->>AI_Pipeline: 6. Trigger background job: run_damage_analysis(mission_id)
+    Backend-->>Frontend: 7. Immediately respond with { "status": "Analysis in Progress" }
+    
+    Note over AI_Pipeline: The core AI workflow happens here
+    AI_Pipeline->>File_Storage: 8. Stitch post-disaster images into post_disaster_map.tif
+    AI_Pipeline->>DB: 9. Fetch plot boundary & baseline_map_path
+    AI_Pipeline->>File_Storage: 10. Load both maps and clip them to the boundary
+    AI_Pipeline->>AI_Pipeline: 11. Run analysis (e.g., U-Net/NDVI) to create a damage_mask
+    AI_Pipeline->>AI_Pipeline: 12. Calculate damage % from the mask
+    AI_Pipeline->>AI_Pipeline: 13. Generate secure, geotagged PDF Certificate
+    
+    AI_Pipeline->>File_Storage: 14. Save the generated PDF Certificate
+    AI_Pipeline->>DB: 15. Create DamageReport record with all results & PDF path
+    AI_Pipeline->>DB: 16. Update DroneMission record (status: 'complete')
+
+    %% Step 4: Farmer/LGU Views the Final Report
+    Farmer->>Frontend: 17. Logs in, sees mission is "Complete", and requests the report
+    Frontend->>Backend: 18. GET /api/reports/{report_id}
+    Backend->>DB: 19. Fetch report metadata (damage %, PDF URL, etc.)
+    Backend-->>Frontend: 20. Return report data as JSON
+    Frontend-->>Farmer: 21. Display results and provide a link to download the PDF certificate
+                </div>
+            </div>
+            
+            <div class="legend">
+                <h3>Phase 2 Key Steps:</h3>
+                <ul>
+                    <li><strong>Mission Trigger (1-2):</strong> Post-disaster drone flight and image upload</li>
+                    <li><strong>Analysis Kick-off (3-5):</strong> Backend processes and stores new images</li>
+                    <li><strong>Core AI Pipeline (6-16):</strong> Image stitching, comparison, damage analysis, and PDF generation</li>
+                    <li><strong>Report Access (17-21):</strong> Farmer retrieves final damage assessment certificate</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="key-insights">
+            <h3>🔍 System Architecture Insights</h3>
+            <ul>
+                <li><strong>Asynchronous Processing:</strong> Heavy AI computations don't block user interactions</li>
+                <li><strong>Two-Phase Design:</strong> Clear separation between baseline establishment and damage assessment</li>
+                <li><strong>Secure File Management:</strong> Raw images and generated reports stored separately from database</li>
+                <li><strong>Real-time Status Updates:</strong> Users can track mission progress without waiting</li>
+                <li><strong>Tamper-proof Certificates:</strong> Generated PDFs serve as official damage documentation</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({ 
+            theme: 'default',
+            sequence: {
+                diagramMarginX: 50,
+                diagramMarginY: 10,
+                actorMargin: 50,
+                width: 150,
+                height: 65,
+                boxMargin: 10,
+                boxTextMargin: 5,
+                noteMargin: 10,
+                messageMargin: 35,
+                mirrorActors: false,
+                bottomMarginAdj: 1,
+                useMaxWidth: true,
+                rightAngles: false,
+                showSequenceNumbers: false
+            },
+            startOnLoad: true 
+        });
+    </script>
+</body>
+</html>
